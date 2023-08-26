@@ -7,14 +7,12 @@ export function load({ cookies }) {
 
   const numberOfWords = wordList.length;
   let wordIndex: number = parseInt(cookies.get("wordIndex") ?? "-1");
-  if (wordIndex >= 0) {
+  if (wordIndex < 0) {
     wordIndex = Math.floor(Math.random() * numberOfWords);
     cookies.set("wordIndex", wordIndex.toString(), { path: "/" });
   }
 
-  return {
-    word: wordIndex,
-  };
+  return;
 }
 
 export const actions = {
@@ -31,29 +29,26 @@ export const actions = {
       let word: string = wordList[wordIndex];
       word = word.toUpperCase();
 
-      console.log(word);
-
       let matched: Array<string> = new Array(word.length);
       let unmatched: Map<string, number> = new Map<string, number>();
       for (let i = 0; i < word.length; i++) {
         const letter = word[i];
 
         if (letter === entry[i]) {
-          matched.push("C");
+          matched[i] = "C";
         } else {
-          matched.push("I");
+          matched[i] = "I";
           unmatched.set(letter, (unmatched.get(letter) ?? 0) + 1);
         }
       }
 
       for (let i = 0; i < entry.length; i++) {
-        if (word[i] !== entry[i]) {
-          const letter = entry[i];
-
-          const letterOccurrences = unmatched.get(letter) ?? 0;
-          if (letterOccurrences > 0) {
+        const letter = entry[i];
+        if (word[i] !== letter) {
+          const numberOfOccurrences = unmatched.get(letter) ?? 0;
+          if (numberOfOccurrences > 0) {
             matched[i] = "M";
-            unmatched.set(letter, letterOccurrences - 1);
+            unmatched.set(letter, numberOfOccurrences - 1);
           }
         }
       }

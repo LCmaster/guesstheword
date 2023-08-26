@@ -1,14 +1,11 @@
 <script lang="ts">
   import axios from "axios";
 
+  import { store } from "$lib/store";
   import Keyboard from "../components/Keyboard.svelte";
   import WordBoard from "../components/WordBoard.svelte";
 
-  export let data;
-
   const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
-
-  let entries: Array<Array<string>> = [];
 
   let currentEntry: Array<string> = [];
 
@@ -22,9 +19,13 @@
         form.append("entry", currentEntry.join(""));
 
         axios.post("/", form).then((res) => {
-          console.log(res.data.data);
+          const data = JSON.parse(res.data.data);
+          console.log(data);
+          store.update((prev) => [
+            ...prev,
+            { entry: data[1], result: data[2] },
+          ]);
         });
-        entries = [...entries, currentEntry];
         currentEntry = [];
       }
     } else {
@@ -64,6 +65,6 @@
     </div>
   </header>
 
-  <WordBoard {entries} {currentEntry} />
+  <WordBoard {currentEntry} />
   <Keyboard entryHandler={handleEntry} />
 </div>

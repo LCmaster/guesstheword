@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let entries: Array<Array<string>>;
+  import { store } from "$lib/store";
   export let currentEntry: Array<string>;
 </script>
 
@@ -14,11 +14,16 @@
         />
       {/each}
     {/each}
-    {#each entries as row, i}
-      {#each row as letter, j}
+    {#each $store as { entry, result }, i}
+      {#each entry as letter, j}
         <div
           style:grid-row={i + 1}
           style:grid-column={j + 1}
+          style:background-color={result[j] !== "C"
+            ? result[j] !== "M"
+              ? "grey"
+              : "orange"
+            : "green"}
           class="w-12 h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md"
         >
           {letter}
@@ -27,7 +32,7 @@
     {/each}
     {#each currentEntry as letter, j}
       <div
-        style:grid-row={entries.length + 1}
+        style:grid-row={$store.length + 1}
         style:grid-column={j + 1}
         class="w-12 h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md"
       >
