@@ -1,30 +1,39 @@
 <script lang="ts">
   import axios from "axios";
 
-  import { store } from "$lib/store";
+  import { game, entries } from "$lib/store";
   import Keyboard from "../components/Keyboard.svelte";
   import WordBoard from "../components/WordBoard.svelte";
+  import Modal from "../components/Modal.svelte";
+  import AboutPage from "../components/AboutPage.svelte";
+  import SettingsPage from "../components/SettingsPage.svelte";
 
   const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
 
+  let canSubmit = false;
   let currentEntry: Array<string> = [];
 
-  let showAboutModal = false;
-  let showSettingsModal = false;
+  let showModal = "";
+
+  $: canSubmit = currentEntry.length === 5;
 
   function handleEntry(entry: string) {
-    if (currentEntry.length === 5) {
+    if (canSubmit) {
       if (entry === "enter") {
         const form = new FormData();
         form.append("entry", currentEntry.join(""));
 
         axios.post("/", form).then((res) => {
           const data = JSON.parse(res.data.data);
-          console.log(data);
-          store.update((prev) => [
+
+          entries.update((prev) => [
             ...prev,
             { entry: data[1], result: data[2] },
           ]);
+
+          if (data[2] === "CCCCC") {
+            game.set(1);
+          }
         });
         currentEntry = [];
       }
@@ -40,6 +49,15 @@
   }
 </script>
 
+{#if showModal}
+  <Modal on:click={() => (showModal = "")}>
+    {#if showModal === "about"}
+      <AboutPage />
+    {:else if showModal === "settings"}
+      <SettingsPage />
+    {/if}
+  </Modal>
+{/if}
 <div
   class="h-screen p-2 flex flex-col justify-between items-center gap-2 md:gap-2"
 >
@@ -47,7 +65,7 @@
     <div class="flex justify-between items-center">
       <button
         on:click={() => {
-          showAboutModal = !showAboutModal;
+          showModal = "about";
         }}
         class="w-6 h-6 p-1 flex justify-center items-center rounded-md border-solid border-black border-2"
       >
@@ -56,7 +74,7 @@
       <h1 class="font-bold text-lg uppercase">Guesstheword</h1>
       <button
         on:click={() => {
-          showSettingsModal = !showSettingsModal;
+          showModal = "settings";
         }}
         class="w-6 h-6 p-1 flex justify-center items-center rounded-md border-solid border-black border-2"
       >
@@ -66,5 +84,5 @@
   </header>
 
   <WordBoard {currentEntry} />
-  <Keyboard entryHandler={handleEntry} />
+  <Keyboard bind:canSubmit entryHandler={handleEntry} />
 </div>
