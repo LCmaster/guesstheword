@@ -14,18 +14,28 @@
   {#each keyboardLetters as row}
     <div class="flex justify-center items-center gap-1">
       {#each row as letter}
-        <button
-          on:click={() => handleLetterClicked(letter)}
-          class="w-8 h-8 md:w-12 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2"
-        >
-          {#if letter === "backspace"}
+        {#if letter === "backspace"}
+          <button
+            on:click={() => handleLetterClicked(letter)}
+            class={`w-8 h-8 md:w-12 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2`}
+          >
             <iconify-icon icon="mdi:backspace" />
-          {:else if letter === "enter"}
+          </button>
+        {:else if letter === "enter"}
+          <button
+            on:click={() => handleLetterClicked(letter)}
+            class={`w-24 h-8 md:w-36 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2`}
+          >
             <iconify-icon icon="uil:enter" />
-          {:else}
+          </button>
+        {:else}
+          <button
+            on:click={() => handleLetterClicked(letter)}
+            class={`w-8 h-8 md:w-12 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2`}
+          >
             {letter}
-          {/if}
-        </button>
+          </button>
+        {/if}
       {/each}
     </div>
   {/each}

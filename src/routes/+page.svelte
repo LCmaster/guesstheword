@@ -1,6 +1,10 @@
 <script lang="ts">
+  import axios from "axios";
+
   import Keyboard from "../components/Keyboard.svelte";
   import WordBoard from "../components/WordBoard.svelte";
+
+  export let data;
 
   const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
 
@@ -14,12 +18,18 @@
   function handleEntry(entry: string) {
     if (currentEntry.length === 5) {
       if (entry === "enter") {
+        const form = new FormData();
+        form.append("entry", currentEntry.join(""));
+
+        axios.post("/", form).then((res) => {
+          console.log(res.data.data);
+        });
         entries = [...entries, currentEntry];
         currentEntry = [];
       }
     } else {
       if (allowed.includes(entry)) {
-        currentEntry = [...currentEntry, entry];
+        currentEntry = [...currentEntry, entry.toUpperCase()];
       }
     }
     if (entry === "backspace") {
