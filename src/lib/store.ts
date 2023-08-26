@@ -1,35 +1,41 @@
 import { writable } from "svelte/store";
 
+function getStoreOrElse(itemName: string, orElse: any) {
+  return typeof window !== "undefined"
+    ? localStorage.getItem(itemName) ?? orElse
+    : orElse;
+}
+
+function setStoreItem(itemName: string, value: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(itemName, value);
+  }
+}
+
+const storedWord: string = getStoreOrElse("word", "");
+export const word = writable(storedWord);
+word.subscribe((value: string) => {
+  setStoreItem("word", word.toString());
+});
+
 const storedEntries: Array<{ entry: string; result: string }> = JSON.parse(
-  typeof window !== "undefined" ? localStorage.getItem("entries") ?? "[]" : "[]"
+  getStoreOrElse("entries", "[]")
 );
 
 export const entries = writable(storedEntries);
 entries.subscribe((value: Array<{ entry: string; result: string }>) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("entries", JSON.stringify(value));
-  }
+  setStoreItem("entries", JSON.stringify(value));
 });
 
-const storedGameState = parseInt(
-  typeof window !== "undefined" ? localStorage.getItem("gameState") ?? "0" : "0"
-);
+const storedGameState = parseInt(getStoreOrElse("gameState", "0"));
 
 export const game = writable(storedGameState);
 game.subscribe((value: number) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("gameState", value.toString());
-  }
+  setStoreItem("gameState", value.toString());
 });
 
-const storedTheme =
-  typeof window !== "undefined"
-    ? localStorage.getItem("theme") ?? "system"
-    : "system";
-
+const storedTheme = getStoreOrElse("theme", "system");
 export const theme = writable(storedTheme);
 theme.subscribe((value: string) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("theme", value);
-  }
+  setStoreItem("theme", value);
 });

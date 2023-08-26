@@ -1,14 +1,52 @@
 <script lang="ts">
-  import axios from "axios";
+  import { generate } from "random-words";
 
-  import { game, entries } from "$lib/store";
+  import { word, game, entries } from "$lib/store";
   import Keyboard from "../components/Keyboard.svelte";
   import WordBoard from "../components/WordBoard.svelte";
   import Modal from "../components/Modal.svelte";
   import AboutPage from "../components/AboutPage.svelte";
   import SettingsPage from "../components/SettingsPage.svelte";
 
+  if ($word.length !== 5) {
+    const newRandomWord = generate({ minLength: 5, maxLength: 5 })
+      .toString()
+      .toUpperCase();
+
+    word.set(newRandomWord);
+  }
+
   const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
+
+  function wordmatcher(word: string, entry: string) {
+    word = word.toUpperCase();
+
+    let matched: Array<string> = new Array(word.length);
+    let unmatched: Map<string, number> = new Map<string, number>();
+    for (let i = 0; i < word.length; i++) {
+      const letter = word[i];
+
+      if (letter === entry[i]) {
+        matched[i] = "C";
+      } else {
+        matched[i] = "I";
+        unmatched.set(letter, (unmatched.get(letter) ?? 0) + 1);
+      }
+    }
+
+    for (let i = 0; i < entry.length; i++) {
+      const letter = entry[i];
+      if (word[i] !== letter) {
+        const numberOfOccurrences = unmatched.get(letter) ?? 0;
+        if (numberOfOccurrences > 0) {
+          matched[i] = "M";
+          unmatched.set(letter, numberOfOccurrences - 1);
+        }
+      }
+    }
+
+    return matched.join("");
+  }
 
   let canSubmit = false;
   let currentEntry: Array<string> = [];
@@ -20,21 +58,18 @@
   function handleEntry(entry: string) {
     if (canSubmit) {
       if (entry === "enter") {
-        const form = new FormData();
-        form.append("entry", currentEntry.join(""));
+        const uppercaseWord = $word.toUpperCase();
+        const uppercaseEntry = currentEntry.join("").toUpperCase();
+        const result = wordmatcher(uppercaseWord, uppercaseEntry);
 
-        axios.post("/", form).then((res) => {
-          const data = JSON.parse(res.data.data);
+        entries.update((prev) => [
+          ...prev,
+          { entry: uppercaseEntry, result: result },
+        ]);
 
-          entries.update((prev) => [
-            ...prev,
-            { entry: data[1], result: data[2] },
-          ]);
-
-          if (data[2] === "CCCCC") {
-            game.set(1);
-          }
-        });
+        if (result === "CCCCC") {
+          game.set(1);
+        }
         currentEntry = [];
       }
     } else {
