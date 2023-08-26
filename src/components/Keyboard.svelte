@@ -1,151 +1,32 @@
-<script>
+<script lang="ts">
+  export let entryHandler: (entry: string) => void;
+  const keyboardLetters = [
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L", "backspace"],
+    ["Z", "X", "C", "V", "B", "N", "M", "enter"],
+  ];
+  const handleLetterClicked = (letter: string) => {
+    entryHandler(letter);
+  };
 </script>
 
-<div class="keyboard-container flex flex-col justify-center items-center gap-2">
-  <div class="flex gap-2">
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      Q
+<div class="w-full flex flex-col gap-1">
+  {#each keyboardLetters as row}
+    <div class="flex justify-center items-center gap-1">
+      {#each row as letter}
+        <button
+          on:click={() => handleLetterClicked(letter)}
+          class="w-8 h-8 md:w-12 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2"
+        >
+          {#if letter === "backspace"}
+            <iconify-icon icon="mdi:backspace" />
+          {:else if letter === "enter"}
+            <iconify-icon icon="uil:enter" />
+          {:else}
+            {letter}
+          {/if}
+        </button>
+      {/each}
     </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      W
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      E
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      R
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      T
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      Y
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      U
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      I
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      O
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      P
-    </div>
-  </div>
-  <div class="flex gap-2">
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      A
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      S
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      D
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      F
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      G
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      H
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      J
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      K
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      L
-    </div>
-    <div
-      class="w-16 h-12 ml-2 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      <iconify-icon icon="mdi:backspace" />
-    </div>
-  </div>
-  <div class="flex gap-2">
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      Z
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      X
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      C
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      V
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      B
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      N
-    </div>
-    <div
-      class="w-12 h-12 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      M
-    </div>
-    <div
-      class="w-28 h-12 ml-4 flex justify-center items-center aspect-square text-2xl rounded-md border-solid border-black border-2"
-    >
-      <iconify-icon icon="uil:enter" />
-    </div>
-  </div>
+  {/each}
 </div>
