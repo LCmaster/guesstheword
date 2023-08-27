@@ -1,7 +1,7 @@
 <script lang="ts">
   import { generate } from "random-words";
 
-  import { word, game, entries } from "$lib/store";
+  import { stats, word, game, entries } from "$lib/store";
   import Keyboard from "../components/Keyboard.svelte";
   import WordBoard from "../components/WordBoard.svelte";
   import Modal from "../components/Modal.svelte";
@@ -77,9 +77,31 @@
 
         if (result === "CCCCC") {
           game.set(1);
+          stats.update((prev) => {
+            const games = prev.games.map((entry, i) =>
+              i === $entries.length ? entry + 1 : entry
+            );
+            const currentWinStreak = prev.currentWinStreak + 1;
+            const bestWinStreak =
+              prev.bestWinStreak >= currentWinStreak
+                ? prev.bestWinStreak
+                : currentWinStreak;
+            return { games, currentWinStreak, bestWinStreak };
+          });
           showModal = "progress";
         } else if ($entries.length === 5 && result !== "CCCCC") {
           game.set(-1);
+          stats.update((prev) => {
+            const games = prev.games.map((entry, i) =>
+              i === $entries.length + 1 ? entry + 1 : entry
+            );
+            const currentWinStreak = 0;
+            const bestWinStreak =
+              prev.bestWinStreak >= currentWinStreak
+                ? prev.bestWinStreak
+                : currentWinStreak;
+            return { games, currentWinStreak, bestWinStreak };
+          });
           showModal = "progress";
         }
 
@@ -109,7 +131,7 @@
     {:else if showModal === "settings"}
       <SettingsPage />
     {:else if showModal === "progress"}
-      <ProgressPage>
+      <ProgressPage bind:stats={$stats}>
         <h2 slot="result" class="font-bold text-2xl uppercase text-center">
           {#if $game === 1}
             Yaayyy!

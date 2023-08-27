@@ -12,13 +12,30 @@ function setLocalStorageItem(itemName: string, value: string) {
   }
 }
 
-const storedStats: Array<number> = JSON.parse(
-  getLocalStorageOrElse("stats", "[]")
+const storedStats: {
+  games: Array<number>;
+  currentWinStreak: number;
+  bestWinStreak: number;
+} = JSON.parse(
+  getLocalStorageOrElse(
+    "stats",
+    JSON.stringify({
+      games: [0, 0, 0, 0, 0, 0, 0],
+      currentWinStreak: 0,
+      bestWinStreak: 0,
+    })
+  )
 );
 export const stats = writable(storedStats);
-stats.subscribe((value: Array<number>) => {
-  setLocalStorageItem("stats", JSON.stringify(value));
-});
+stats.subscribe(
+  (value: {
+    games: Array<number>;
+    currentWinStreak: number;
+    bestWinStreak: number;
+  }) => {
+    setLocalStorageItem("stats", JSON.stringify(value));
+  }
+);
 
 const storedWord: string = getLocalStorageOrElse("word", "");
 export const word = writable(storedWord);
