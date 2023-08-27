@@ -7,13 +7,26 @@
   import Modal from "../components/Modal.svelte";
   import AboutPage from "../components/AboutPage.svelte";
   import SettingsPage from "../components/SettingsPage.svelte";
+  import ProgressPage from "../components/ProgressPage.svelte";
+
+  function generateNextWord() {
+    return generate({ minLength: 5, maxLength: 5 }).toString().toUpperCase();
+  }
+
+  function resetGame() {
+    game.set(0);
+  }
+
+  function resetBoard() {
+    entries.set([]);
+  }
+
+  function resetWord() {
+    word.set(generateNextWord());
+  }
 
   if ($word.length !== 5) {
-    const newRandomWord = generate({ minLength: 5, maxLength: 5 })
-      .toString()
-      .toUpperCase();
-
-    word.set(newRandomWord);
+    resetWord();
   }
 
   const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
@@ -51,25 +64,30 @@
   let canSubmit = false;
   let currentEntry: Array<string> = [];
 
-  let showModal = "";
+  let showModal = $game !== 0 ? "progress" : "";
 
   $: canSubmit = currentEntry.length === 5;
 
   function handleEntry(entry: string) {
     if (canSubmit) {
-      if (entry === "enter") {
+      if (entry === "ENTER") {
         const uppercaseWord = $word.toUpperCase();
         const uppercaseEntry = currentEntry.join("").toUpperCase();
         const result = wordmatcher(uppercaseWord, uppercaseEntry);
+
+        if (result === "CCCCC") {
+          game.set(1);
+          showModal = "progress";
+        } else if ($entries.length === 5 && result !== "CCCCC") {
+          game.set(-1);
+          showModal = "progress";
+        }
 
         entries.update((prev) => [
           ...prev,
           { entry: uppercaseEntry, result: result },
         ]);
 
-        if (result === "CCCCC") {
-          game.set(1);
-        }
         currentEntry = [];
       }
     } else {
@@ -77,7 +95,7 @@
         currentEntry = [...currentEntry, entry.toUpperCase()];
       }
     }
-    if (entry === "backspace") {
+    if (entry === "BACKSPACE") {
       currentEntry.pop();
       currentEntry = [...currentEntry];
     }
@@ -90,6 +108,35 @@
       <AboutPage />
     {:else if showModal === "settings"}
       <SettingsPage />
+    {:else if showModal === "progress"}
+      <ProgressPage>
+        <h2 slot="result" class="font-bold text-2xl uppercase text-center">
+          {#if $game === 1}
+            Yaayyy!
+          {:else}
+            Oh no!
+          {/if}
+        </h2>
+
+        <div slot="footer" class="grid grid-cols-2 gap-2">
+          {#if $game !== 0}
+            <button
+              on:click={() => {
+                resetGame();
+                resetWord();
+                resetBoard();
+                showModal = "";
+              }}
+              class="px-4 py-2 font-bold rounded-md text-white bg-blue-500"
+              >Next word</button
+            >
+            <button
+              class="px-4 py-2 font-bold rounded-md text-white bg-blue-500"
+              >Share it on twitter</button
+            >
+          {/if}
+        </div>
+      </ProgressPage>
     {/if}
   </Modal>
 {/if}
@@ -118,6 +165,6 @@
     </div>
   </header>
 
-  <WordBoard {currentEntry} />
-  <Keyboard bind:canSubmit entryHandler={handleEntry} />
+  <WordBoard bind:entries={$entries} {currentEntry} />
+  <Keyboard bind:entries={$entries} bind:canSubmit entryHandler={handleEntry} />
 </div>

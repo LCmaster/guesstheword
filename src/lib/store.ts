@@ -1,41 +1,49 @@
 import { writable } from "svelte/store";
 
-function getStoreOrElse(itemName: string, orElse: any) {
+function getLocalStorageOrElse(itemName: string, orElse: any) {
   return typeof window !== "undefined"
     ? localStorage.getItem(itemName) ?? orElse
     : orElse;
 }
 
-function setStoreItem(itemName: string, value: string) {
+function setLocalStorageItem(itemName: string, value: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(itemName, value);
   }
 }
 
-const storedWord: string = getStoreOrElse("word", "");
+const storedStats: Array<number> = JSON.parse(
+  getLocalStorageOrElse("stats", "[]")
+);
+export const stats = writable(storedStats);
+stats.subscribe((value: Array<number>) => {
+  setLocalStorageItem("stats", JSON.stringify(value));
+});
+
+const storedWord: string = getLocalStorageOrElse("word", "");
 export const word = writable(storedWord);
 word.subscribe((value: string) => {
-  setStoreItem("word", word.toString());
+  setLocalStorageItem("word", word.toString());
 });
 
 const storedEntries: Array<{ entry: string; result: string }> = JSON.parse(
-  getStoreOrElse("entries", "[]")
+  getLocalStorageOrElse("entries", "[]")
 );
 
 export const entries = writable(storedEntries);
 entries.subscribe((value: Array<{ entry: string; result: string }>) => {
-  setStoreItem("entries", JSON.stringify(value));
+  setLocalStorageItem("entries", JSON.stringify(value));
 });
 
-const storedGameState = parseInt(getStoreOrElse("gameState", "0"));
+const storedGameState = parseInt(getLocalStorageOrElse("gameState", "0"));
 
 export const game = writable(storedGameState);
 game.subscribe((value: number) => {
-  setStoreItem("gameState", value.toString());
+  setLocalStorageItem("gameState", value.toString());
 });
 
-const storedTheme = getStoreOrElse("theme", "system");
+const storedTheme = getLocalStorageOrElse("theme", "system");
 export const theme = writable(storedTheme);
 theme.subscribe((value: string) => {
-  setStoreItem("theme", value);
+  setLocalStorageItem("theme", value);
 });
