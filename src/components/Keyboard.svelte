@@ -1,78 +1,138 @@
 <script lang="ts">
-  import { game } from "$lib/store";
+  import { gameState, entries, input } from "$lib/game";
+  import { locale } from "$lib/settings";
+  import { onDestroy } from "svelte";
+  import KeyboardKey from "./KeyboardKey.svelte";
 
-  export let entries: Array<{ entry: string; result: string }>;
-  export let canSubmit = false;
   export let entryHandler: (entry: string) => void;
 
-  const keyboardLetters = [
-    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-    ["A", "S", "D", "F", "G", "H", "J", "K", "L", "BACKSPACE"],
-    ["Z", "X", "C", "V", "B", "N", "M", "ENTER"],
+  const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
+
+  let keyboardKeys = [
+    {
+      key: $locale === "fr" ? "A" : "Q",
+      hint: "",
+    },
+    {
+      key: $locale === "fr" ? "Z" : "W",
+      hint: "",
+    },
+    { key: "E", hint: "" },
+    { key: "R", hint: "" },
+    { key: "T", hint: "" },
+    { key: "Y", hint: "" },
+    { key: "U", hint: "" },
+    { key: "I", hint: "" },
+    { key: "O", hint: "" },
+    { key: "P", hint: "" },
+    {
+      key: $locale === "fr" ? "Q" : "A",
+      hint: "",
+    },
+    { key: "S", hint: "" },
+    { key: "D", hint: "" },
+    { key: "F", hint: "" },
+    { key: "G", hint: "" },
+    { key: "H", hint: "" },
+    { key: "J", hint: "" },
+    { key: "K", hint: "" },
+    { key: "L", hint: "" },
+    { key: "BACKSPACE", hint: "" },
+    {
+      key: $locale === "fr" ? "W" : "Z",
+      hint: "",
+    },
+    { key: "X", hint: "" },
+    { key: "C", hint: "" },
+    { key: "V", hint: "" },
+    { key: "B", hint: "" },
+    { key: "N", hint: "" },
+    { key: "M", hint: "" },
+    { key: "ENTER", hint: "" },
   ];
 
-  $: computedKeyboardKeys = keyboardLetters.map((keyRow) => {
-    return keyRow.map((key) => {
-      let enabled = false;
-      let played = false;
+  const unsubscribeFromEntries = entries.subscribe((value) => {
+    const usedKeys = new Map<string, string>();
 
-      for (let i = 0; i < entries.length; i++) {
-        for (let j = 0; j < entries[i].entry.length; j++) {
-          if (entries[i].entry[j] === key) {
-            played = true;
-            enabled = enabled || entries[i].result[j] !== "I";
-          }
-        }
+    for (let i = 0; i < value.length; i++) {
+      for (let j = 0; j < value[i].input.length; j++) {
+        const key = value[i].input[j];
+        const result = value[i].result[j];
+        usedKeys.set(key, usedKeys.get(key) ?? result);
       }
+    }
 
-      return { key, incorrect: played && !enabled };
+    keyboardKeys = keyboardKeys.map((entry) => {
+      return {
+        key: entry.key,
+        hint: usedKeys.get(entry.key) ?? "",
+      };
     });
   });
 
-  const handleLetterClicked = (letter: string) => {
-    entryHandler(letter);
-  };
+  let canSubmit = false;
+  const unsubscribeFromCurrentEntry = input.subscribe((value) => {
+    canSubmit = value.length === 5;
+  });
+
+  function handleKeyTapped(key: string) {
+    input.update((prev: Array<string>) => {
+      if (key === "BACKSPACE") {
+        if (prev.length > 0) {
+          prev.pop();
+        }
+        return [...prev];
+      } else {
+        if (prev.length === 5) {
+          if (key === "ENTER") {
+            entryHandler($input.join(""));
+            return [];
+          } else {
+            return [...prev];
+          }
+        } else {
+          if (allowed.filter((allowedKey) => allowedKey === key).length > 0) {
+            return [...prev, key];
+          } else {
+            return [...prev];
+          }
+        }
+      }
+    });
+  }
+
+  let keyDown = "";
+
+  function handleKeyDown(key: string) {
+    if (key !== keyDown) keyDown = key;
+  }
+  function handleKeyUp(key: string) {
+    if (key === keyDown) {
+      handleKeyTapped(keyDown);
+      keyDown = "";
+    }
+  }
+
+  onDestroy(() => {
+    unsubscribeFromEntries();
+    unsubscribeFromCurrentEntry();
+  });
 </script>
 
-<div class="w-full flex flex-col gap-1">
-  {#each computedKeyboardKeys as row}
-    <div class="flex justify-center items-center gap-1">
-      {#each row as { key, incorrect }}
-        {#if key === "BACKSPACE"}
-          <button
-            disabled={$game !== 0}
-            style:background-color={!$game ? "white" : "gray"}
-            style:border-color={!$game ? "black" : "gray"}
-            on:click={() => handleLetterClicked(key)}
-            class={`w-8 h-8 md:w-12 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2`}
-          >
-            <iconify-icon icon="mdi:backspace" />
-          </button>
-        {:else if key === "ENTER"}
-          <button
-            disabled={!canSubmit}
-            style:background-color={canSubmit ? "white" : "gray"}
-            style:border-color={canSubmit ? "black" : "gray"}
-            on:click={() => handleLetterClicked(key)}
-            class={`w-24 h-8 md:w-36 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2`}
-          >
-            <iconify-icon
-              icon="uil:enter"
-              style:color={canSubmit ? "black" : "dimgray"}
-            />
-          </button>
-        {:else}
-          <button
-            disabled={$game !== 0}
-            style:background-color={incorrect ? "gray" : "white"}
-            style:border-color={incorrect ? "gray" : "black"}
-            on:click={() => handleLetterClicked(key)}
-            class={`w-8 h-8 md:w-12 md:h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md border-solid border-black border-2`}
-          >
-            {key}
-          </button>
-        {/if}
-      {/each}
-    </div>
+<svelte:window
+  on:keydown={(ev) => handleKeyDown(ev.key.toUpperCase())}
+  on:keyup={(ev) => handleKeyUp(ev.key.toUpperCase())}
+/>
+
+<div class="grid grid-cols-10 grid-rows-3 gap-1">
+  {#each keyboardKeys as entry}
+    <KeyboardKey
+      key={entry.key}
+      hint={entry.hint}
+      disabled={$gameState !== "PLAYING"}
+      isPressed={entry.key === keyDown}
+      on:mouseup={() => handleKeyUp(entry.key)}
+      on:mousedown={() => handleKeyDown(entry.key)}
+    />
   {/each}
 </div>

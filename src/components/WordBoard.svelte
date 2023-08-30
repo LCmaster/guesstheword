@@ -1,6 +1,5 @@
 <script lang="ts">
-  export let entries: Array<{ entry: string; result: string }>;
-  export let currentEntry: Array<string>;
+  import { entries, input } from "$lib/game";
 </script>
 
 <div class="p-4 flex justify-center items-center">
@@ -14,8 +13,8 @@
         />
       {/each}
     {/each}
-    {#each entries as { entry, result }, i}
-      {#each entry as letter, j}
+    {#each $entries as { input, result }, i}
+      {#each input as letter, j}
         <div
           style:grid-row={i + 1}
           style:grid-column={j + 1}
@@ -30,9 +29,9 @@
         </div>
       {/each}
     {/each}
-    {#each currentEntry as letter, j}
+    {#each $input as letter, j}
       <div
-        style:grid-row={entries.length + 1}
+        style:grid-row={$entries.length + 1}
         style:grid-column={j + 1}
         class="w-12 h-12 flex justify-center items-center aspect-square text-lg md:text-2xl rounded-md"
       >

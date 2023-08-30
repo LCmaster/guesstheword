@@ -1,5 +1,5 @@
 <script>
-  import { theme } from "$lib/store";
+  import { theme } from "$lib/settings";
 
   let systemTheme = $theme === "system";
   let darkMode = $theme === "dark";

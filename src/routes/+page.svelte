@@ -1,35 +1,28 @@
 <script lang="ts">
-  import { generate } from "random-words";
+  import { gameId, gameState, word, input, entries } from "$lib/game";
 
-  import { stats, word, game, entries } from "$lib/store";
   import Keyboard from "../components/Keyboard.svelte";
   import WordBoard from "../components/WordBoard.svelte";
   import Modal from "../components/Modal.svelte";
   import AboutPage from "../components/AboutPage.svelte";
   import SettingsPage from "../components/SettingsPage.svelte";
   import ProgressPage from "../components/ProgressPage.svelte";
+  import AppBar from "../components/AppBar.svelte";
+  import { generate } from "random-words";
 
   function generateNextWord() {
     return generate({ minLength: 5, maxLength: 5 }).toString().toUpperCase();
   }
 
+  let showModal = $gameState !== "PLAYING" ? "progress" : "";
+  $: if ($gameState !== "PLAYING") {
+    showModal = "progress";
+  }
+
   function resetGame() {
-    game.set(0);
-  }
-
-  function resetBoard() {
     entries.set([]);
-  }
-
-  function resetWord() {
     word.set(generateNextWord());
   }
-
-  if ($word.length !== 5) {
-    resetWord();
-  }
-
-  const allowed: Array<string> = "ABCDEFGHIJKLMNOPQRSTUVWYXZ".split("");
 
   function wordmatcher(word: string, entry: string) {
     word = word.toUpperCase();
@@ -58,82 +51,62 @@
       }
     }
 
-    return matched.join("");
+    return matched;
   }
 
-  let canSubmit = false;
-  let currentEntry: Array<string> = [];
+  function handleEntry(input: string) {
+    const result = wordmatcher($word, input);
 
-  let showModal = $game !== 0 ? "progress" : "";
-
-  $: canSubmit = currentEntry.length === 5;
-
-  function handleEntry(entry: string) {
-    if (canSubmit) {
-      if (entry === "ENTER") {
-        const uppercaseWord = $word.toUpperCase();
-        const uppercaseEntry = currentEntry.join("").toUpperCase();
-        const result = wordmatcher(uppercaseWord, uppercaseEntry);
-
-        if (result === "CCCCC") {
-          game.set(1);
-          stats.update((prev) => {
-            const games = prev.games.map((entry, i) =>
-              i === $entries.length ? entry + 1 : entry
-            );
-            const currentWinStreak = prev.currentWinStreak + 1;
-            const bestWinStreak =
-              prev.bestWinStreak >= currentWinStreak
-                ? prev.bestWinStreak
-                : currentWinStreak;
-            return { games, currentWinStreak, bestWinStreak };
-          });
-          showModal = "progress";
-        } else if ($entries.length === 5 && result !== "CCCCC") {
-          game.set(-1);
-          stats.update((prev) => {
-            const games = prev.games.map((entry, i) =>
-              i === $entries.length + 1 ? entry + 1 : entry
-            );
-            const currentWinStreak = 0;
-            const bestWinStreak =
-              prev.bestWinStreak >= currentWinStreak
-                ? prev.bestWinStreak
-                : currentWinStreak;
-            return { games, currentWinStreak, bestWinStreak };
-          });
-          showModal = "progress";
-        }
-
-        entries.update((prev) => [
-          ...prev,
-          { entry: uppercaseEntry, result: result },
-        ]);
-
-        currentEntry = [];
-      }
-    } else {
-      if (allowed.includes(entry)) {
-        currentEntry = [...currentEntry, entry.toUpperCase()];
-      }
-    }
-    if (entry === "BACKSPACE") {
-      currentEntry.pop();
-      currentEntry = [...currentEntry];
-    }
+    entries.update((prev) => {
+      return [...prev, { input: input.split(""), result }];
+    });
   }
+
+  $: console.log($gameState, $word, $input, $entries);
 </script>
 
-{#if showModal}
-  <Modal on:click={() => (showModal = "")}>
-    {#if showModal === "about"}
-      <AboutPage />
-    {:else if showModal === "settings"}
-      <SettingsPage />
-    {:else if showModal === "progress"}
-      <ProgressPage bind:stats={$stats}>
+<section
+  id="game"
+  class="h-screen p-4 flex flex-col justify-between items-center"
+>
+  <header class="container mx-auto">
+    <AppBar>
+      <button
+        slot="leading"
+        on:click={() => {
+          showModal = "about";
+        }}
+        class="w-6 h-6 p-1 flex justify-center items-center rounded-md border-solid border-black border-2"
+      >
+        <iconify-icon icon="mdi:help" />
+      </button>
+      <h1 class="font-bold text-lg uppercase">guesstheword</h1>
+      <button
+        slot="trailling"
+        on:click={() => {
+          showModal = "settings";
+        }}
+        class="w-6 h-6 p-1 flex justify-center items-center rounded-md border-solid border-black border-2"
+      >
+        <iconify-icon icon="mdi:gear" />
+      </button>
+    </AppBar>
+  </header>
+  <main class="container mx-auto"><WordBoard /></main>
+  <footer class="container mx-auto">
+    <Keyboard entryHandler={handleEntry} />
+  </footer>
+</section>
+<section id="modal" style:display={!showModal ? "none" : "block"}>
+  <button
+    on:click={() => (showModal = "")}
+    class="fixed top-0 left-0 w-screen h-screen bg-gray-900/50"
+  />
+  <Modal title={showModal} on:close={() => (showModal = "")}>
+    {#if showModal === "progress"}
+      <ProgressPage>
         <h2 slot="result" class="font-bold text-2xl uppercase text-center">
-          {#if $game === 1}
+          {#if $gameState === "WON"}
             Yaayyy!
           {:else}
             Oh no!
@@ -141,12 +114,10 @@
         </h2>
 
         <div slot="footer" class="grid grid-cols-2 gap-2">
-          {#if $game !== 0}
+          {#if $gameState !== "PLAYING"}
             <button
               on:click={() => {
                 resetGame();
-                resetWord();
-                resetBoard();
                 showModal = "";
               }}
               class="px-4 py-2 font-bold rounded-md text-white bg-blue-500"
@@ -159,34 +130,10 @@
           {/if}
         </div>
       </ProgressPage>
+    {:else if showModal === "settings"}
+      <SettingsPage />
+    {:else}
+      <AboutPage />
     {/if}
   </Modal>
-{/if}
-<div
-  class="h-screen p-2 flex flex-col justify-between items-center gap-2 md:gap-2"
->
-  <header class="w-full">
-    <div class="flex justify-between items-center">
-      <button
-        on:click={() => {
-          showModal = "about";
-        }}
-        class="w-6 h-6 p-1 flex justify-center items-center rounded-md border-solid border-black border-2"
-      >
-        <iconify-icon icon="mdi:help" />
-      </button>
-      <h1 class="font-bold text-lg uppercase">Guesstheword</h1>
-      <button
-        on:click={() => {
-          showModal = "settings";
-        }}
-        class="w-6 h-6 p-1 flex justify-center items-center rounded-md border-solid border-black border-2"
-      >
-        <iconify-icon icon="mdi:gear" />
-      </button>
-    </div>
-  </header>
-
-  <WordBoard bind:entries={$entries} {currentEntry} />
-  <Keyboard bind:entries={$entries} bind:canSubmit entryHandler={handleEntry} />
-</div>
+</section>
