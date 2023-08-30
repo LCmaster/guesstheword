@@ -61,8 +61,6 @@
       return [...prev, { input: input.split(""), result }];
     });
   }
-
-  $: console.log($gameState, $word, $input, $entries);
 </script>
 
 <section
